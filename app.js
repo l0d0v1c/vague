@@ -8,9 +8,11 @@ const translations = {
         inhaling: "Inspirez",
         holding: "Retenez",
         exhaling: "Expirez",
-        cycles: "Cycles",
-        totalTime: "Temps total",
-        install: "Installer l'application"
+        install: "Installer l'application",
+        settings: "Paramètres",
+        language: "Langue",
+        level: "Niveau",
+        bibliography: "Bibliographie"
     },
     en: {
         title: "Guided Breathing",
@@ -21,17 +23,17 @@ const translations = {
         inhaling: "Inhale",
         holding: "Hold",
         exhaling: "Exhale",
-        cycles: "Cycles",
-        totalTime: "Total Time",
-        install: "Install App"
+        install: "Install App",
+        settings: "Settings",
+        language: "Language",
+        level: "Level",
+        bibliography: "Bibliography"
     }
 };
 
 class BreathingApp {
     constructor() {
-        this.currentLang = 'fr';
-        this.currentMode = 'medium';
-        this.pattern = [3, 5, 6];
+        this.loadPreferences();
         this.isRunning = false;
         this.cycles = 0;
         this.startTime = null;
@@ -47,8 +49,40 @@ class BreathingApp {
         this.updateTriangle();
     }
     
+    detectBrowserLanguage() {
+        const browserLang = navigator.language || navigator.userLanguage || 'en';
+        return browserLang.startsWith('fr') ? 'fr' : 'en';
+    }
+    
+    loadPreferences() {
+        const savedPrefs = localStorage.getItem('breathing-app-prefs');
+        if (savedPrefs) {
+            const prefs = JSON.parse(savedPrefs);
+            this.currentLang = prefs.language || this.detectBrowserLanguage();
+            this.currentMode = prefs.mode || 'expert';
+        } else {
+            this.currentLang = this.detectBrowserLanguage();
+            this.currentMode = 'expert';
+        }
+        
+        // Set pattern based on mode
+        const patterns = {
+            'newbie': [2, 4, 4],
+            'medium': [3, 5, 6],
+            'expert': [4, 7, 8]
+        };
+        this.pattern = patterns[this.currentMode];
+    }
+    
+    savePreferences() {
+        const prefs = {
+            language: this.currentLang,
+            mode: this.currentMode
+        };
+        localStorage.setItem('breathing-app-prefs', JSON.stringify(prefs));
+    }
+    
     initElements() {
-        this.langToggle = document.getElementById('langToggle');
         this.startBtn = document.getElementById('startBtn');
         this.playIcon = document.getElementById('playIcon');
         this.pauseIcon = document.getElementById('pauseIcon');
@@ -58,10 +92,22 @@ class BreathingApp {
         this.totalTime = document.getElementById('totalTime');
         this.modeBtns = document.querySelectorAll('.mode-btn');
         this.installBtn = document.getElementById('installBtn');
+        this.settingsBtn = document.getElementById('settingsBtn');
+        this.settingsModal = document.getElementById('settingsModal');
+        this.closeSettings = document.getElementById('closeSettings');
+        this.langFr = document.getElementById('langFr');
+        this.langEn = document.getElementById('langEn');
+        this.biblioBtn = document.getElementById('biblioBtn');
+        this.biblioSection = document.getElementById('biblioSection');
+        this.closeBiblio = document.getElementById('closeBiblio');
+        this.triangleSvg = document.getElementById('triangleSvg');
+        
+        // Set initial button states based on saved preferences
+        this.updateLanguageButtons();
+        this.updateModeButtons();
     }
     
     initEventListeners() {
-        this.langToggle.addEventListener('click', () => this.toggleLanguage());
         this.startBtn.addEventListener('click', () => this.toggleBreathing());
         
         this.modeBtns.forEach(btn => {
@@ -72,17 +118,69 @@ class BreathingApp {
             });
         });
         
+        // Settings modal events
+        this.settingsBtn.addEventListener('click', () => this.openSettings());
+        this.closeSettings.addEventListener('click', () => this.closeSettingsModal());
+        this.settingsModal.addEventListener('click', (e) => {
+            if (e.target === this.settingsModal) {
+                this.closeSettingsModal();
+            }
+        });
+        
+        // Language selection events
+        this.langFr.addEventListener('click', () => this.setLanguage('fr'));
+        this.langEn.addEventListener('click', () => this.setLanguage('en'));
+        
+        // Bibliography events
+        this.biblioBtn.addEventListener('click', () => this.showBibliography());
+        this.closeBiblio.addEventListener('click', () => this.hideBibliography());
+        
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && this.isRunning) {
                 this.stopBreathing();
             }
         });
+        
+        // ESC key to close modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.settingsModal.style.display !== 'none') {
+                this.closeSettingsModal();
+            }
+        });
     }
     
-    toggleLanguage() {
-        this.currentLang = this.currentLang === 'fr' ? 'en' : 'fr';
-        this.langToggle.textContent = this.currentLang === 'fr' ? 'EN' : 'FR';
+    openSettings() {
+        this.settingsModal.style.display = 'flex';
+    }
+    
+    closeSettingsModal() {
+        this.settingsModal.style.display = 'none';
+    }
+    
+    setLanguage(lang) {
+        this.currentLang = lang;
+        this.updateLanguageButtons();
         this.updateLanguage();
+        this.savePreferences();
+    }
+    
+    updateLanguageButtons() {
+        this.langFr.classList.toggle('active', this.currentLang === 'fr');
+        this.langEn.classList.toggle('active', this.currentLang === 'en');
+    }
+    
+    updateModeButtons() {
+        this.modeBtns.forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.mode === this.currentMode);
+        });
+    }
+    
+    showBibliography() {
+        $(this.biblioSection).fadeIn(300);
+    }
+    
+    hideBibliography() {
+        $(this.biblioSection).fadeOut(300);
     }
     
     updateLanguage() {
@@ -105,6 +203,7 @@ class BreathingApp {
         const pattern = btn.dataset.pattern.split('-').map(Number);
         this.pattern = pattern;
         this.updateTriangle();
+        this.savePreferences();
     }
     
     updateTriangle() {
@@ -162,6 +261,9 @@ class BreathingApp {
         this.playIcon.style.display = 'none';
         this.pauseIcon.style.display = 'block';
         
+        // Show triangle with fade-in
+        this.triangleSvg.classList.add('visible');
+        
         if (!this.startTime) {
             this.startTime = Date.now();
         }
@@ -175,6 +277,9 @@ class BreathingApp {
         this.isRunning = false;
         this.playIcon.style.display = 'block';
         this.pauseIcon.style.display = 'none';
+        
+        // Hide triangle with fade-out
+        this.triangleSvg.classList.remove('visible');
         
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
@@ -303,12 +408,20 @@ class BreathingApp {
     
     initPWA() {
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => {
+            navigator.serviceWorker.register('./sw.js').catch(err => {
                 console.log('Service Worker registration failed:', err);
             });
         }
         
         let deferredPrompt;
+        
+        // Show install button on mobile browsers
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        
+        if (isMobile && !isStandalone) {
+            this.installBtn.style.display = 'block';
+        }
         
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
@@ -326,6 +439,13 @@ class BreathingApp {
                 }
                 
                 deferredPrompt = null;
+            } else if (isMobile) {
+                // Fallback for iOS Safari
+                if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                    alert('Pour installer cette app: Appuyez sur le bouton de partage puis "Sur l\'écran d\'accueil"');
+                } else {
+                    alert('Pour installer cette app: Ouvrez le menu du navigateur et sélectionnez "Ajouter à l\'écran d\'accueil"');
+                }
             }
         });
         

@@ -12,30 +12,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1 data-i18n="title">Respiration Guidée</h1>
-            <div class="controls">
-                <button id="langToggle" class="btn-secondary">EN</button>
-            </div>
-        </header>
-
-        <div class="mode-selector">
-            <button class="mode-btn" data-mode="newbie" data-pattern="2-4-4">
-                <span data-i18n="newbie">Débutant</span>
-                <small>2-4-4</small>
-            </button>
-            <button class="mode-btn active" data-mode="medium" data-pattern="3-5-6">
-                <span data-i18n="medium">Intermédiaire</span>
-                <small>3-5-6</small>
-            </button>
-            <button class="mode-btn" data-mode="expert" data-pattern="4-7-8">
-                <span data-i18n="expert">Expert</span>
-                <small>4-7-8</small>
-            </button>
+        <div class="header-section">
+            <header>
+                <h1 data-i18n="title">Respiration Guidée</h1>
+            </header>
         </div>
 
         <div class="breathing-area">
@@ -92,20 +77,98 @@
             </div>
         </div>
 
-        <div class="stats">
-            <div class="stat-item">
-                <span data-i18n="cycles">Cycles</span>
-                <span id="cycleCount">0</span>
+        <div class="controls-section">
+            <div class="stats">
+                <div class="stat-item">
+                    <span id="cycleCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span id="totalTime">00:00</span>
+                </div>
             </div>
-            <div class="stat-item">
-                <span data-i18n="totalTime">Temps total</span>
-                <span id="totalTime">00:00</span>
+
+            <button id="installBtn" class="install-btn" style="display: none;">
+                <span data-i18n="install">Installer l'application</span>
+            </button>
+        </div>
+        
+        <button id="settingsBtn" class="settings-btn">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"/>
+            </svg>
+        </button>
+        
+        <button id="biblioBtn" class="biblio-btn">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z"/>
+            </svg>
+        </button>
+        
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 data-i18n="settings">Paramètres</h2>
+                    <button id="closeSettings" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label data-i18n="language">Langue</label>
+                        <div class="language-selector">
+                            <button id="langFr" class="lang-btn active">Français</button>
+                            <button id="langEn" class="lang-btn">English</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label data-i18n="level">Niveau</label>
+                        <div class="mode-selector">
+                            <button class="mode-btn" data-mode="newbie" data-pattern="2-4-4">
+                                <span data-i18n="newbie">Débutant</span>
+                                <small>2-4-4</small>
+                            </button>
+                            <button class="mode-btn" data-mode="medium" data-pattern="3-5-6">
+                                <span data-i18n="medium">Intermédiaire</span>
+                                <small>3-5-6</small>
+                            </button>
+                            <button class="mode-btn active" data-mode="expert" data-pattern="4-7-8">
+                                <span data-i18n="expert">Expert</span>
+                                <small>4-7-8</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <button id="installBtn" class="install-btn" style="display: none;">
-            <span data-i18n="install">Installer l'application</span>
-        </button>
+        
+        <!-- Bibliography Section -->
+        <div id="biblioSection" class="biblio-section" style="display: none;">
+            <div class="biblio-content">
+                <div class="biblio-header">
+                    <h2 data-i18n="bibliography">Bibliographie</h2>
+                    <button id="closeBiblio" class="close-btn">&times;</button>
+                </div>
+                <div class="biblio-body">
+                    <ol>
+                        <li>Zaccaro, A. <em>et al.</em> How breath-control can change your life: a systematic review on psycho-physiological correlates of slow breathing. <em>Front. Hum. Neurosci.</em> <strong>12</strong>, 353 (2018).</li>
+                        <li>Laborde, S., Mosley, E. & Thayer, J. F. Heart rate variability and cardiac vagal tone in psychophysiological research – recommendations for experiment planning, data analysis, and data reporting. <em>Psychophysiology</em> <strong>54</strong>, 578–590 (2017).</li>
+                        <li>Hayano, J. <em>et al.</em> Respiratory sinus arrhythmia: a phenomenon improving pulmonary gas exchange and circulatory efficiency. <em>Am. J. Physiol.</em> <strong>271</strong>, H620–H629 (1996).</li>
+                        <li>Van Diest, I. <em>et al.</em> Inhalation/exhalation ratio modulates the effect of slow breathing on heart rate variability and relaxation. <em>Biol. Psychol.</em> <strong>96</strong>, 93–99 (2014).</li>
+                        <li>Bosch, J. A., de Geus, E. J., Ring, C., Nieuw Amerongen, A. V. & Stowell, J. R. Academic examinations and immunity: academic stress or examination stress? <em>Psychophysiology</em> <strong>38</strong>, 1009–1014 (2001).</li>
+                        <li>Benson, H., Klipper, M. Z. & Crassweller, K. D. The relaxation response: a bridge between psychiatry and medicine. <em>Med. Clin. North Am.</em> <strong>61</strong>, 929–938 (1977).</li>
+                        <li>Jerath, R., Edry, J. W., Barnes, V. A. & Jerath, V. Physiology of long pranayamic breathing: neural respiratory elements may provide a mechanism that explains how slow deep breathing shifts the autonomic nervous system. <em>Med. Hypotheses</em> <strong>67</strong>, 566–571 (2006).</li>
+                        <li>Lehrer, P. M. & Gevirtz, R. Heart rate variability biofeedback: how and why does it work? <em>Front. Psychol.</em> <strong>5</strong>, 756 (2014).</li>
+                        <li>Busch, V. <em>et al.</em> The effect of deep and slow breathing on pain perception, autonomic activity, and mood processing—an experimental study. <em>Pain Med.</em> <strong>13</strong>, 215–228 (2012).</li>
+                        <li>Streeter, C. C. <em>et al.</em> Effects of yoga on the autonomic nervous system, gamma-aminobutyric-acid, and allostasis in epilepsy, depression, and post-traumatic stress disorder. <em>Med. Hypotheses</em> <strong>78</strong>, 571–579 (2012).</li>
+                        <li>Ma, X. <em>et al.</em> The effect of diaphragmatic breathing on attention, negative affect and stress in healthy adults. <em>Front. Psychol.</em> <strong>8</strong>, 874 (2017).</li>
+                        <li>Perciavalle, V. <em>et al.</em> The role of deep breathing on stress. <em>Neurol. Sci.</em> <strong>38</strong>, 451–458 (2017).</li>
+                        <li>Jafari, H., Courtois, I., Van den Bergh, O., Vlaeyen, J. W. S. & Van Diest, I. Pain and respiration: a systematic review. <em>Pain</em> <strong>158</strong>, 995–1006 (2017).</li>
+                        <li>Brown, R. P. & Gerbarg, P. L. Sudarshan Kriya yogic breathing in the treatment of stress, anxiety, and depression: part I—neurophysiologic model. <em>J. Altern. Complement. Med.</em> <strong>11</strong>, 189–201 (2005).</li>
+                        <li>Weil, A. <em>Breathing: The Master Key to Self Healing</em> (Sounds True, 1999).</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>

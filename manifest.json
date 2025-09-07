@@ -2,10 +2,11 @@
     "name": "Respiration Guidée",
     "short_name": "Respiration",
     "description": "Application de respiration contrôlée avec différents niveaux de difficulté",
-    "start_url": "/",
+    "start_url": "./",
+    "scope": "./",
     "display": "standalone",
-    "background_color": "#0f172a",
-    "theme_color": "#1a4d8f",
+    "background_color": "#ffffff",
+    "theme_color": "#2563eb",
     "orientation": "portrait",
     "icons": [
         {
