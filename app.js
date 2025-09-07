@@ -228,21 +228,23 @@ class BreathingApp {
         const topRightX = startX + holdWidth;
         const baseX = startX + (holdWidth / 2);
         
-        // Separate paths for each edge
+        // Simple clean triangle
+        const trianglePath = `M ${baseX} ${baseY} L ${topLeftX} ${topY} L ${topRightX} ${topY} Z`;
+        
+        // Separate paths for each edge (for highlighting)
         const leftPath = `M ${baseX} ${baseY} L ${topLeftX} ${topY}`;
         const topPath = `M ${topLeftX} ${topY} L ${topRightX} ${topY}`;
         const rightPath = `M ${topRightX} ${topY} L ${baseX} ${baseY}`;
-        const fillPath = `M ${baseX} ${baseY} L ${topLeftX} ${topY} L ${topRightX} ${topY} L ${baseX} ${baseY} Z`;
         
+        document.getElementById('trianglePath').setAttribute('d', trianglePath);
         document.getElementById('trianglePathLeft').setAttribute('d', leftPath);
         document.getElementById('trianglePathTop').setAttribute('d', topPath);
         document.getElementById('trianglePathRight').setAttribute('d', rightPath);
-        document.getElementById('triangleFill').setAttribute('d', fillPath);
         
-        // Reset all edges to normal width
-        document.getElementById('trianglePathLeft').setAttribute('stroke-width', '4');
-        document.getElementById('trianglePathTop').setAttribute('stroke-width', '4');
-        document.getElementById('trianglePathRight').setAttribute('stroke-width', '4');
+        // Reset all overlay edges
+        document.getElementById('trianglePathLeft').setAttribute('opacity', '0');
+        document.getElementById('trianglePathTop').setAttribute('opacity', '0');
+        document.getElementById('trianglePathRight').setAttribute('opacity', '0');
         
         this.cursor.setAttribute('cx', baseX);
         this.cursor.setAttribute('cy', baseY);
@@ -260,6 +262,10 @@ class BreathingApp {
         this.isRunning = true;
         this.playIcon.style.display = 'none';
         this.pauseIcon.style.display = 'block';
+        
+        // Reset points system
+        this.activePoints = new Map();
+        this.lastPhase = null;
         
         // Show triangle with fade-in
         this.triangleSvg.classList.add('visible');
@@ -281,6 +287,14 @@ class BreathingApp {
         // Hide triangle with fade-out
         this.triangleSvg.classList.remove('visible');
         
+        // Clear all active points
+        if (this.activePoints) {
+            for (let [key, point] of this.activePoints.entries()) {
+                point.remove();
+            }
+            this.activePoints.clear();
+        }
+        
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
@@ -292,10 +306,10 @@ class BreathingApp {
         this.phaseIndicator.querySelector('span').setAttribute('data-i18n', 'ready');
         this.updateLanguage();
         
-        // Reset all edges to normal width
-        document.getElementById('trianglePathLeft').setAttribute('stroke-width', '4');
-        document.getElementById('trianglePathTop').setAttribute('stroke-width', '4');
-        document.getElementById('trianglePathRight').setAttribute('stroke-width', '4');
+        // Reset all overlay edges
+        document.getElementById('trianglePathLeft').setAttribute('opacity', '0');
+        document.getElementById('trianglePathTop').setAttribute('opacity', '0');
+        document.getElementById('trianglePathRight').setAttribute('opacity', '0');
         
         if (this.startTime) {
             this.totalElapsed += Date.now() - this.startTime;
@@ -336,6 +350,16 @@ class BreathingApp {
             if (progress >= 1) {
                 this.cycles++;
                 this.cycleCount.textContent = this.cycles;
+                // Clear all points for new cycle
+                if (this.activePoints) {
+                    for (let [key, point] of this.activePoints.entries()) {
+                        $(point).animate({ opacity: 0 }, 400, () => {
+                            point.remove();
+                        });
+                    }
+                    this.activePoints.clear();
+                }
+                this.lastPhase = null;
                 this.animateBreathingCycle();
                 return;
             }
@@ -365,23 +389,26 @@ class BreathingApp {
             this.cursor.setAttribute('cx', x);
             this.cursor.setAttribute('cy', y);
             
+            // Check for intermediate points and show brief flash
+            this.checkIntermediatePoints(phase, progress, inhaleEnd, holdEnd, x, y);
+            
             if (phase !== this.currentPhase) {
                 this.currentPhase = phase;
                 this.phaseIndicator.querySelector('span').setAttribute('data-i18n', phase);
                 this.updateLanguage();
                 
-                // Reset all edges to normal width
-                document.getElementById('trianglePathLeft').setAttribute('stroke-width', '4');
-                document.getElementById('trianglePathTop').setAttribute('stroke-width', '4');
-                document.getElementById('trianglePathRight').setAttribute('stroke-width', '4');
+                // Reset all overlay edges
+                document.getElementById('trianglePathLeft').setAttribute('opacity', '0');
+                document.getElementById('trianglePathTop').setAttribute('opacity', '0');
+                document.getElementById('trianglePathRight').setAttribute('opacity', '0');
                 
-                // Double the width of the active edge
+                // Show the active edge
                 if (phase === 'inhaling') {
-                    document.getElementById('trianglePathLeft').setAttribute('stroke-width', '8');
+                    document.getElementById('trianglePathLeft').setAttribute('opacity', '1');
                 } else if (phase === 'holding') {
-                    document.getElementById('trianglePathTop').setAttribute('stroke-width', '8');
+                    document.getElementById('trianglePathTop').setAttribute('opacity', '1');
                 } else if (phase === 'exhaling') {
-                    document.getElementById('trianglePathRight').setAttribute('stroke-width', '8');
+                    document.getElementById('trianglePathRight').setAttribute('opacity', '1');
                 }
             }
             
@@ -389,6 +416,104 @@ class BreathingApp {
         };
         
         animate();
+    }
+    
+    checkIntermediatePoints(phase, progress, inhaleEnd, holdEnd, x, y) {
+        const [inhale, hold, exhale] = this.pattern;
+        const total = inhale + hold + exhale;
+        
+        // Initialize active points if needed
+        if (!this.activePoints) this.activePoints = new Map();
+        
+        // Define intermediate points for each phase
+        let intermediatePoints = [];
+        
+        if (phase === 'inhaling') {
+            const phaseProgress = progress / inhaleEnd;
+            intermediatePoints = [0.25, 0.5, 0.75];
+        } else if (phase === 'holding') {
+            const phaseProgress = (progress - inhaleEnd) / (holdEnd - inhaleEnd);
+            if (hold >= 5) {
+                intermediatePoints = [0.2, 0.4, 0.6, 0.8];
+            } else if (hold >= 3) {
+                intermediatePoints = [0.33, 0.66];
+            }
+        } else if (phase === 'exhaling') {
+            const phaseProgress = (progress - holdEnd) / (1 - holdEnd);
+            if (exhale >= 6) {
+                intermediatePoints = [0.17, 0.33, 0.5, 0.67, 0.83];
+            } else {
+                intermediatePoints = [0.25, 0.5, 0.75];
+            }
+        }
+        
+        // Check if we're close to any intermediate point
+        const currentPhaseProgress = this.getCurrentPhaseProgress(phase, progress, inhaleEnd, holdEnd);
+        
+        for (let point of intermediatePoints) {
+            const tolerance = 0.05; // 5% tolerance around the point
+            const pointKey = `${phase}-${point}`;
+            
+            if (Math.abs(currentPhaseProgress - point) < tolerance) {
+                if (!this.activePoints.has(pointKey)) {
+                    const flash = this.createIntermediatePoint(x, y);
+                    this.activePoints.set(pointKey, flash);
+                }
+            }
+        }
+        
+        // Remove points when phase changes
+        if (phase !== this.lastPhase && this.lastPhase) {
+            this.clearPhasePoints(this.lastPhase);
+        }
+        this.lastPhase = phase;
+    }
+    
+    getCurrentPhaseProgress(phase, totalProgress, inhaleEnd, holdEnd) {
+        if (phase === 'inhaling') {
+            return totalProgress / inhaleEnd;
+        } else if (phase === 'holding') {
+            return (totalProgress - inhaleEnd) / (holdEnd - inhaleEnd);
+        } else if (phase === 'exhaling') {
+            return (totalProgress - holdEnd) / (1 - holdEnd);
+        }
+        return 0;
+    }
+    
+    createIntermediatePoint(x, y) {
+        // Create a persistent point - smaller radius
+        const point = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        point.setAttribute('cx', x);
+        point.setAttribute('cy', y);
+        point.setAttribute('r', '3');
+        point.setAttribute('fill', '#60a5fa');
+        point.setAttribute('opacity', '0');
+        
+        // Add to SVG
+        const svg = document.getElementById('triangleSvg');
+        svg.appendChild(point);
+        
+        // Fade in
+        $(point).animate({ opacity: 1 }, 600);
+        
+        return point;
+    }
+    
+    clearPhasePoints(phase) {
+        // Remove all points for the given phase
+        const keysToRemove = [];
+        for (let [key, point] of this.activePoints.entries()) {
+            if (key.startsWith(phase + '-')) {
+                // Fade out and remove
+                $(point).animate({ opacity: 0 }, 800, () => {
+                    point.remove();
+                });
+                keysToRemove.push(key);
+            }
+        }
+        
+        // Clean up the map
+        keysToRemove.forEach(key => this.activePoints.delete(key));
     }
     
     updateTimer() {

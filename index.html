@@ -33,27 +33,32 @@
                 </defs>
                 
                 <g id="triangleGroup">
+                    <path id="trianglePath" d="" 
+                          fill="url(#triangleGradient)" 
+                          stroke="#2563eb" 
+                          stroke-width="9"
+                          stroke-linejoin="round"
+                          stroke-linecap="round"/>
+                    
+                    <!-- Invisible overlay paths for active edge highlighting -->
                     <path id="trianglePathLeft" d="" 
                           fill="none" 
-                          stroke="#2563eb" 
-                          stroke-width="4"
+                          stroke="#1e3a8a" 
+                          stroke-width="9"
                           stroke-linecap="round"
-                          stroke-linejoin="round"/>
+                          opacity="0"/>
                     <path id="trianglePathTop" d="" 
                           fill="none" 
-                          stroke="#2563eb" 
-                          stroke-width="4"
+                          stroke="#1e3a8a" 
+                          stroke-width="9"
                           stroke-linecap="round"
-                          stroke-linejoin="round"/>
+                          opacity="0"/>
                     <path id="trianglePathRight" d="" 
                           fill="none" 
-                          stroke="#2563eb" 
-                          stroke-width="4"
+                          stroke="#1e3a8a" 
+                          stroke-width="9"
                           stroke-linecap="round"
-                          stroke-linejoin="round"/>
-                    <path id="triangleFill" d="" 
-                          fill="url(#triangleGradient)" 
-                          stroke="none"/>
+                          opacity="0"/>
                 </g>
                 
                 <circle id="cursor" cx="150" cy="230" r="8" fill="#60a5fa" opacity="0">
