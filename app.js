@@ -12,7 +12,10 @@ const translations = {
         settings: "Paramètres",
         language: "Langue",
         level: "Niveau",
-        bibliography: "Bibliographie"
+        bibliography: "Bibliographie",
+        about: "À propos",
+        aboutTextStart: "Cette application est codée par l'IA de pseudoxia (",
+        aboutTextEnd: ") et inspirée de plusieurs publications. Elle permet de s'entraîner à la respiration contrôlée dans le but de libérer des endorphines et de réguler le stress."
     },
     en: {
         title: "Guided Breathing",
@@ -27,7 +30,10 @@ const translations = {
         settings: "Settings",
         language: "Language",
         level: "Level",
-        bibliography: "Bibliography"
+        bibliography: "Bibliography",
+        about: "About",
+        aboutTextStart: "This application is coded by pseudoxia's AI (",
+        aboutTextEnd: ") and inspired by several publications. It allows training in controlled breathing to release endorphins and regulate stress."
     }
 };
 
@@ -101,6 +107,11 @@ class BreathingApp {
         this.biblioSection = document.getElementById('biblioSection');
         this.closeBiblio = document.getElementById('closeBiblio');
         this.triangleSvg = document.getElementById('triangleSvg');
+        this.countdownOverlay = document.getElementById('countdownOverlay');
+        this.countdownNumber = document.getElementById('countdownNumber');
+        this.infoBtn = document.getElementById('infoBtn');
+        this.infoModal = document.getElementById('infoModal');
+        this.closeInfo = document.getElementById('closeInfo');
         
         // Set initial button states based on saved preferences
         this.updateLanguageButtons();
@@ -135,16 +146,30 @@ class BreathingApp {
         this.biblioBtn.addEventListener('click', () => this.showBibliography());
         this.closeBiblio.addEventListener('click', () => this.hideBibliography());
         
+        // Info modal events
+        this.infoBtn.addEventListener('click', () => this.showInfo());
+        this.closeInfo.addEventListener('click', () => this.hideInfo());
+        this.infoModal.addEventListener('click', (e) => {
+            if (e.target === this.infoModal) {
+                this.hideInfo();
+            }
+        });
+        
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && this.isRunning) {
                 this.stopBreathing();
             }
         });
         
-        // ESC key to close modal
+        // ESC key to close modals
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.settingsModal.style.display !== 'none') {
-                this.closeSettingsModal();
+            if (e.key === 'Escape') {
+                if (this.settingsModal.style.display !== 'none') {
+                    this.closeSettingsModal();
+                }
+                if (this.infoModal.style.display !== 'none') {
+                    this.hideInfo();
+                }
             }
         });
     }
@@ -181,6 +206,14 @@ class BreathingApp {
     
     hideBibliography() {
         $(this.biblioSection).fadeOut(300);
+    }
+    
+    showInfo() {
+        this.infoModal.style.display = 'flex';
+    }
+    
+    hideInfo() {
+        this.infoModal.style.display = 'none';
     }
     
     updateLanguage() {
@@ -259,9 +292,40 @@ class BreathingApp {
     }
     
     startBreathing() {
-        this.isRunning = true;
         this.playIcon.style.display = 'none';
         this.pauseIcon.style.display = 'block';
+        this.modeBtns.forEach(btn => btn.disabled = true);
+        
+        // Start countdown before breathing
+        this.startCountdown();
+    }
+    
+    startCountdown() {
+        let count = 3;
+        this.countdownOverlay.style.display = 'flex';
+        this.countdownNumber.textContent = count;
+        
+        const countdownInterval = setInterval(() => {
+            count--;
+            if (count > 0) {
+                this.countdownNumber.textContent = count;
+                // Restart animation
+                this.countdownNumber.style.animation = 'none';
+                setTimeout(() => {
+                    this.countdownNumber.style.animation = 'countdownPulse 1s ease-in-out';
+                }, 10);
+            } else {
+                clearInterval(countdownInterval);
+                // Hide countdown and start breathing
+                $(this.countdownOverlay).fadeOut(300, () => {
+                    this.beginBreathing();
+                });
+            }
+        }, 1000);
+    }
+    
+    beginBreathing() {
+        this.isRunning = true;
         
         // Reset points system
         this.activePoints = new Map();
@@ -274,8 +338,6 @@ class BreathingApp {
             this.startTime = Date.now();
         }
         
-        this.modeBtns.forEach(btn => btn.disabled = true);
-        
         this.animateBreathingCycle();
     }
     
@@ -283,6 +345,9 @@ class BreathingApp {
         this.isRunning = false;
         this.playIcon.style.display = 'block';
         this.pauseIcon.style.display = 'none';
+        
+        // Hide countdown if visible
+        this.countdownOverlay.style.display = 'none';
         
         // Hide triangle with fade-out
         this.triangleSvg.classList.remove('visible');
@@ -538,45 +603,18 @@ class BreathingApp {
             });
         }
         
-        let deferredPrompt;
+        // Initialiser le système de mise à jour (non-bloquant)
+        setTimeout(() => {
+            new UpdateManager();
+        }, 500);
         
-        // Show install button on mobile browsers
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        // Initialiser le nouveau système d'installation PWA
+        setTimeout(() => {
+            new PWAInstaller();
+        }, 1500);
         
-        if (isMobile && !isStandalone) {
-            this.installBtn.style.display = 'block';
-        }
-        
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            this.installBtn.style.display = 'block';
-        });
-        
-        this.installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                
-                if (outcome === 'accepted') {
-                    this.installBtn.style.display = 'none';
-                }
-                
-                deferredPrompt = null;
-            } else if (isMobile) {
-                // Fallback for iOS Safari
-                if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                    alert('Pour installer cette app: Appuyez sur le bouton de partage puis "Sur l\'écran d\'accueil"');
-                } else {
-                    alert('Pour installer cette app: Ouvrez le menu du navigateur et sélectionnez "Ajouter à l\'écran d\'accueil"');
-                }
-            }
-        });
-        
-        window.addEventListener('appinstalled', () => {
-            this.installBtn.style.display = 'none';
-        });
+        // Cacher le bouton d'installation par défaut - le nouveau système le gère
+        this.installBtn.style.display = 'none';
     }
 }
 

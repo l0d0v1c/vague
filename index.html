@@ -8,7 +8,22 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Respiration Guidée</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    
+    <!-- Apple Touch Icons pour iOS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="apple-touch-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="apple-touch-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="167x167" href="apple-touch-icon-167x167.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="apple-touch-icon-60x60.png">
+    
+    <!-- Android Chrome -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512x512.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -22,6 +37,8 @@
                 <h1 data-i18n="title">Respiration Guidée</h1>
             </header>
         </div>
+        
+        <button id="infoBtn" class="info-btn">?</button>
 
         <div class="breathing-area">
             <svg viewBox="0 0 400 260" class="triangle-svg" id="triangleSvg">
@@ -79,6 +96,11 @@
 
             <div class="phase-indicator" id="phaseIndicator">
                 <span data-i18n="ready">Prêt</span>
+            </div>
+            
+            <!-- Countdown overlay -->
+            <div id="countdownOverlay" class="countdown-overlay" style="display: none;">
+                <div id="countdownNumber" class="countdown-number">3</div>
             </div>
         </div>
 
@@ -174,8 +196,25 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Info Modal -->
+        <div id="infoModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 data-i18n="about">À propos</h2>
+                    <button id="closeInfo" class="close-btn">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        <span data-i18n="aboutTextStart">Cette application est codée par l'IA de pseudoxia (</span><a href="https://www.pseudoxia.org" target="_blank" rel="noopener noreferrer">https://www.pseudoxia.org</a><span data-i18n="aboutTextEnd">) et inspirée de plusieurs publications. Elle permet de s'entraîner à la respiration contrôlée dans le but de libérer des endorphines et de réguler le stress.</span>
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <script src="update-manager.js"></script>
+    <script src="pwa-installer.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
